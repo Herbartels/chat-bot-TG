@@ -1,0 +1,39 @@
+import requests
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
+
+# Telegram Bot Token
+TOKEN = "YOUR_TELEGRAM_BOT_TOKEN"
+
+# Function to handle the /start command
+def start(update, context):
+    update.message.reply_text("Welcome to Code Search Bot! Send me a query to search for code snippets.")
+
+# Function to handle normal text messages
+def search_code(update, context):
+    query = update.message.text
+    search_results = search_code_online(query)
+    if search_results:
+        update.message.reply_text(search_results)
+    else:
+        update.message.reply_text("No code snippets found for your query.")
+
+# Function to search for code online (replace this with your preferred code search API)
+def search_code_online(query):
+    # Example using GitHub Gist API for demonstration purposes
+    response = requests.get(f"https://api.github.com/gists/public?since=daily&q={query}")
+    if response.status_code == 200:
+        gists = response.json()
+        if gists:
+            return "Here are some code snippets I found:\n" + "\n".join([f"{gist['html_url']}" for gist in gists])
+    return None
+
+def main():
+    updater = Updater(TOKEN, use_context=True)
+    dp = updater.dispatcher
+    dp.add_handler(CommandHandler("start", start))
+    dp.add_handler(MessageHandler(Filters.text & ~Filters.command, search_code))
+    updater.start_polling()
+    updater.idle()
+
+if __name__ == '__main__':
+    main()
